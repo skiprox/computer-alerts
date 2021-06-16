@@ -1,15 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import classnames from 'classnames';
 import glitchText from 'helpers/glitch';
 
-const alertTime = 3300;
-const alertLimit = 10;
+const alertLimit = 9;
 
 export default function Calendar(props) {
   const [notifications, setNotifications] = useState({alerts: []});
+  const notificationsRef = useRef([]);
+  const alertTime = useRef(3300);
+
+  const removeElement = (index) => {
+    notificationsRef.current.splice(index, 1);
+    setNotifications({alerts: notificationsRef.current});
+    alertTime.current = Math.max(alertTime.current - 10, 800);
+  }
+
   useEffect(() => {
     let alertsArr = [];
     setInterval(() => {
+      alertsArr = notificationsRef.current;
       const glitchArr = glitchText.split('');
       let str = '';
       for (let j = 0; j < 440; j++) {
@@ -17,10 +26,12 @@ export default function Calendar(props) {
       }
       alertsArr.push(str);
       if (alertsArr.length === alertLimit) {
-        alertsArr.slice(1, alertLimit);
+        console.log('we have a match for limit');
+        alertsArr = alertsArr.slice(1, alertLimit);
       }
-      setNotifications({alerts: alertsArr});
-    }, alertTime);
+      notificationsRef.current = alertsArr;
+      setNotifications({alerts: notificationsRef.current});
+    }, alertTime.current);
   }, []);
   return (
     <ul className="Calendar-notifications absolute flex flex-column mr2 mt2">
@@ -28,7 +39,12 @@ export default function Calendar(props) {
         return (
           <li key={index} className="Calendar-notifications__item pa3 pt4 ba mv1">
             <span className="Calendar-notifications__top absolute bb w-100"></span>
-            <span className="Calendar-notifications__close absolute bl bb flex items-center justify-center">×</span>
+            <span
+              className="Calendar-notifications__close absolute bl bb flex items-center justify-center"
+              onClick={() => {
+                removeElement(index);
+              }}
+            >×</span>
             <p>{notification}</p>
           </li>
         )
